@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  storage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pixelfy-storage
+    restart: always
+    ports:
+      - "9005:9005"
+    volumes:
+      - storage_data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=9005
+      - DEBUG=False
+      - STORAGE_BASE_PATH=/app/data
+      - MAX_FILE_SIZE=52428800
+      - API_KEY=${STORAGE_API_KEY:-storage_service_secret_key_2024}
+      - AUTO_CLEANUP_ENABLED=True
+      - CLEANUP_OLDER_THAN_DAYS=30
+      - CLEANUP_INTERVAL_HOURS=24
+    env_file:
+      - .env
+    networks:
+      - pixelfy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9005/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  pixelfy-network:
+    driver: bridge
+
+volumes:
+  storage_data:
+    driver: local
